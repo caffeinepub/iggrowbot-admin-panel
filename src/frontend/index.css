@@ -1,0 +1,172 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Bricolage Grotesque (display) ── */
+@font-face {
+  font-family: "Bricolage Grotesque";
+  src: url("/assets/fonts/BricolageGrotesque.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ── Figtree (body) ── */
+@font-face {
+  font-family: "Figtree";
+  src: url("/assets/fonts/Figtree.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ── Geist Mono (code) ── */
+@font-face {
+  font-family: "Geist Mono";
+  src: url("/assets/fonts/GeistMono.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@layer base {
+  :root {
+    --radius: 0.5rem;
+
+    /* Dark-mode-first admin palette: deep slate + teal accent */
+    --background: 0.16 0.008 250;
+    --foreground: 0.93 0.01 250;
+
+    --card: 0.19 0.01 250;
+    --card-foreground: 0.93 0.01 250;
+
+    --popover: 0.22 0.012 250;
+    --popover-foreground: 0.93 0.01 250;
+
+    /* Teal/cyan primary */
+    --primary: 0.72 0.14 195;
+    --primary-foreground: 0.12 0.01 250;
+
+    --secondary: 0.24 0.012 250;
+    --secondary-foreground: 0.88 0.01 250;
+
+    --muted: 0.22 0.01 250;
+    --muted-foreground: 0.58 0.015 250;
+
+    --accent: 0.26 0.015 250;
+    --accent-foreground: 0.93 0.01 250;
+
+    --destructive: 0.63 0.22 27;
+    --destructive-foreground: 0.985 0 0;
+
+    --border: 0.28 0.012 250;
+    --input: 0.24 0.01 250;
+    --ring: 0.72 0.14 195;
+
+    /* Status colors */
+    --success: 0.72 0.16 155;
+    --success-foreground: 0.1 0.02 155;
+    --warning: 0.78 0.14 78;
+    --warning-foreground: 0.12 0.02 78;
+
+    /* Chart colors */
+    --chart-1: 0.72 0.14 195;
+    --chart-2: 0.65 0.18 155;
+    --chart-3: 0.60 0.14 240;
+    --chart-4: 0.72 0.18 78;
+    --chart-5: 0.68 0.20 27;
+
+    /* Sidebar */
+    --sidebar: 0.145 0.008 250;
+    --sidebar-foreground: 0.93 0.01 250;
+    --sidebar-primary: 0.72 0.14 195;
+    --sidebar-primary-foreground: 0.12 0.01 250;
+    --sidebar-accent: 0.22 0.012 250;
+    --sidebar-accent-foreground: 0.93 0.01 250;
+    --sidebar-border: 0.28 0.012 250;
+    --sidebar-ring: 0.72 0.14 195;
+  }
+
+  /* The design is dark-mode first; light class is same as dark by design */
+  .light {
+    --background: 0.16 0.008 250;
+    --foreground: 0.93 0.01 250;
+    --card: 0.19 0.01 250;
+    --card-foreground: 0.93 0.01 250;
+    --popover: 0.22 0.012 250;
+    --popover-foreground: 0.93 0.01 250;
+    --primary: 0.72 0.14 195;
+    --primary-foreground: 0.12 0.01 250;
+    --secondary: 0.24 0.012 250;
+    --secondary-foreground: 0.88 0.01 250;
+    --muted: 0.22 0.01 250;
+    --muted-foreground: 0.58 0.015 250;
+    --accent: 0.26 0.015 250;
+    --accent-foreground: 0.93 0.01 250;
+    --destructive: 0.63 0.22 27;
+    --destructive-foreground: 0.985 0 0;
+    --border: 0.28 0.012 250;
+    --input: 0.24 0.01 250;
+    --ring: 0.72 0.14 195;
+    --sidebar: 0.145 0.008 250;
+    --sidebar-foreground: 0.93 0.01 250;
+    --sidebar-primary: 0.72 0.14 195;
+    --sidebar-primary-foreground: 0.12 0.01 250;
+    --sidebar-accent: 0.22 0.012 250;
+    --sidebar-accent-foreground: 0.93 0.01 250;
+    --sidebar-border: 0.28 0.012 250;
+    --sidebar-ring: 0.72 0.14 195;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: "Figtree", sans-serif;
+  }
+
+  html {
+    color-scheme: dark;
+  }
+}
+
+/* ── Grid background pattern ── */
+.grid-bg {
+  background-image:
+    linear-gradient(oklch(var(--border) / 0.4) 1px, transparent 1px),
+    linear-gradient(90deg, oklch(var(--border) / 0.4) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* ── Glow pulse for connected state ── */
+@keyframes status-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 oklch(var(--success) / 0.5);
+  }
+  50% {
+    box-shadow: 0 0 0 6px oklch(var(--success) / 0);
+  }
+}
+
+.status-pulse {
+  animation: status-pulse 2.5s ease-in-out infinite;
+}
+
+/* ── Shimmer loading ── */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    oklch(var(--muted)) 0%,
+    oklch(var(--accent)) 50%,
+    oklch(var(--muted)) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
