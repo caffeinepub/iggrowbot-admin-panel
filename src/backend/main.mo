@@ -8,10 +8,10 @@ import Time "mo:core/Time";
 import OutCall "http-outcalls/outcall";
 import AccessControl "authorization/access-control";
 import List "mo:core/List";
-import Migration "migration";
+
 import MixinAuthorization "authorization/MixinAuthorization";
 
-(with migration = Migration.run)
+
 actor {
   let lowBalanceThresholdDefault = 5.0;
 
