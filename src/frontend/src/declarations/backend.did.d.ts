@@ -89,6 +89,8 @@ export interface _SERVICE {
   'setLowBalanceThreshold' : ActorMethod<[number], undefined>,
   'submitPayment' : ActorMethod<[string, number], undefined>,
   'syncServices' : ActorMethod<[], undefined>,
+  'bulkSetServices' : ActorMethod<[Array<IggrowbotService>], undefined>,
+  'clearServices' : ActorMethod<[], undefined>,
   'toggleLowBalanceAlert' : ActorMethod<[], boolean>,
   'transform' : ActorMethod<[TransformationInput], TransformationOutput>,
   'verifyPayment' : ActorMethod<[string], undefined>,

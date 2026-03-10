@@ -84,6 +84,20 @@ export function useGetServices() {
   });
 }
 
+export function useBulkSetServices() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (services: import("../backend").IggrowbotService[]) => {
+      if (!actor) throw new Error("Actor not ready");
+      return actor.bulkSetServices(services);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["services"] });
+    },
+  });
+}
+
 export function useSyncServices() {
   const { actor } = useActor();
   const queryClient = useQueryClient();
@@ -267,5 +281,65 @@ export function useGetMyOrders() {
       return actor.getMyOrders();
     },
     enabled: !!actor && !isFetching,
+  });
+}
+
+// ── Admin Manual Credit ───────────────────────────────────────────────────────
+
+export function useAdminManualCredit() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      utr,
+      amount,
+      userPrincipal,
+    }: {
+      utr: string;
+      amount: number;
+      userPrincipal: string;
+    }) => {
+      if (!actor) throw new Error("Actor not ready");
+      const { Principal } = await import("@icp-sdk/core/principal");
+      return actor.adminManualCredit(
+        utr,
+        amount,
+        Principal.fromText(userPrincipal),
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pendingPayments"] });
+      queryClient.invalidateQueries({ queryKey: ["userBalance"] });
+      queryClient.invalidateQueries({ queryKey: ["myPayments"] });
+    },
+  });
+}
+
+// ── Browser-side IGGROWBOT Sync ───────────────────────────────────────────────
+// Fetches services directly from IGGROWBOT in the browser (via CORS proxy),
+// applies 500% markup, and stores them in the canister.
+// This bypasses the balance check entirely.
+
+import { fetchIggrowbotServices } from "../utils/iggrowbotSync";
+
+export function useBrowserSync() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      apiKey,
+      apiUrl,
+    }: { apiKey: string; apiUrl: string }) => {
+      if (!actor) throw new Error("Actor not ready");
+      const services = await fetchIggrowbotServices(apiUrl, apiKey);
+      if (services.length === 0)
+        throw new Error("No services returned from IGGROWBOT");
+      await actor.bulkSetServices(services);
+      return services.length;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["services"] });
+      queryClient.invalidateQueries({ queryKey: ["isConfigured"] });
+    },
   });
 }

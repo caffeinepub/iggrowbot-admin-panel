@@ -96,7 +96,10 @@ export interface backendInterface {
     setLowBalanceThreshold(threshold: number): Promise<void>;
     submitPayment(utr: string, amount: number): Promise<void>;
     syncServices(): Promise<void>;
+    bulkSetServices(services: Array<IggrowbotService>): Promise<void>;
+    clearServices(): Promise<void>;
     toggleLowBalanceAlert(): Promise<boolean>;
     transform(input: TransformationInput): Promise<TransformationOutput>;
     verifyPayment(utr: string): Promise<void>;
+    adminManualCredit(utrInput: string, amount: number, user: Principal): Promise<void>;
 }

@@ -179,9 +179,12 @@ export interface backendInterface {
     setLowBalanceThreshold(threshold: number): Promise<void>;
     submitPayment(utr: string, amount: number): Promise<void>;
     syncServices(): Promise<void>;
+    bulkSetServices(services: Array<IggrowbotService>): Promise<void>;
+    clearServices(): Promise<void>;
     toggleLowBalanceAlert(): Promise<boolean>;
     transform(input: TransformationInput): Promise<TransformationOutput>;
     verifyPayment(utr: string): Promise<void>;
+    adminManualCredit(utrInput: string, amount: number, user: Principal): Promise<void>;
 }
 import type { OrderRecord as _OrderRecord, OrderStatus as _OrderStatus, PaymentRecord as _PaymentRecord, PaymentStatus as _PaymentStatus, UserProfile as _UserProfile, UserRole as _UserRole } from "./declarations/backend.did.d.ts";
 export class Backend implements backendInterface {
@@ -508,6 +511,34 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async bulkSetServices(services: Array<IggrowbotService>): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.bulkSetServices(services);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.bulkSetServices(services);
+            return result;
+        }
+    }
+    async clearServices(): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.clearServices();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.clearServices();
+            return result;
+        }
+    }
     async toggleLowBalanceAlert(): Promise<boolean> {
         if (this.processError) {
             try {
@@ -547,6 +578,20 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.verifyPayment(arg0);
+            return result;
+        }
+    }
+    async adminManualCredit(arg0: string, arg1: number, arg2: Principal): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await (this.actor as any).adminManualCredit(arg0, arg1, arg2);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await (this.actor as any).adminManualCredit(arg0, arg1, arg2);
             return result;
         }
     }

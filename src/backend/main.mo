@@ -195,6 +195,24 @@ actor {
     };
     services.values().toArray();
   };
+  // Admin: bulk import services (called from frontend after fetching from IGGROWBOT)
+  public shared ({ caller }) func bulkSetServices(newServices : [IggrowbotService]) : async () {
+    if (not AccessControl.isAdmin(accessControlState, caller)) {
+      Runtime.trap("Unauthorized: Only admins can import services");
+    };
+    services.clear();
+    for (svc in newServices.vals()) {
+      services.add(svc.id, svc);
+    };
+  };
+
+  // Admin: clear all services
+  public shared ({ caller }) func clearServices() : async () {
+    if (not AccessControl.isAdmin(accessControlState, caller)) {
+      Runtime.trap("Unauthorized: Only admins can clear services");
+    };
+    services.clear();
+  };
 
   // User wallet
   public query ({ caller }) func getUserBalance() : async Float {
@@ -218,10 +236,40 @@ actor {
     userBalances.add(user, currentBalance + amount);
   };
 
+  // Admin manual credit: directly credits a user and records the payment as verified
+  // Used when a customer's UTR was already submitted by mistake or from another device
+  public shared ({ caller }) func adminManualCredit(utrInput : Text, amount : Float, user : Principal) : async () {
+    if (not AccessControl.isAdmin(accessControlState, caller)) {
+      Runtime.trap("Unauthorized: Only admins can do manual credits");
+    };
+    // Add as a verified payment record
+    let payment : PaymentRecord = {
+      utr = utrInput;
+      amount;
+      user;
+      status = #verified;
+      timestamp = Time.now();
+    };
+    payments.add(payment);
+    // Credit the user balance
+    let currentBalance = switch (userBalances.get(user)) {
+      case (null) { 0.0 };
+      case (?balance) { balance };
+    };
+    userBalances.add(user, currentBalance + amount);
+  };
+
   // Payment management
   public shared ({ caller }) func submitPayment(utr : Text, amount : Float) : async () {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can submit payments");
+    };
+    // Check for duplicate UTR across all payments
+    let existing = payments.filter(
+      func(p : PaymentRecord) : Bool { p.utr == utr }
+    );
+    if (existing.toArray().size() > 0) {
+      Runtime.trap("UTR already submitted. If your payment is not credited, please contact admin with your Transaction ID.");
     };
     let payment : PaymentRecord = {
       utr;
@@ -256,7 +304,7 @@ actor {
 
     payments.values().forEach(
       func(payment) {
-        if (payment.utr == utr) {
+        if (payment.utr == utr and payment.status == #verified) {
           let currentBalance = switch (userBalances.get(payment.user)) {
             case (null) { 0.0 };
             case (?balance) { balance };

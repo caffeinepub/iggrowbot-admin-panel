@@ -50,6 +50,7 @@ import {
   LayoutDashboard,
   Link2,
   Loader2,
+  LogIn,
   Package,
   RefreshCw,
   Settings,
@@ -66,7 +67,12 @@ import { toast } from "sonner";
 import type { OrderRecord, PaymentRecord } from "./backend";
 import type { IggrowbotService } from "./backend";
 import { OrderStatus, PaymentStatus } from "./backend";
+import { useActor } from "./hooks/useActor";
+import { useInternetIdentity } from "./hooks/useInternetIdentity";
 import {
+  useAdminManualCredit,
+  useBrowserSync,
+  useBulkSetServices,
   useCreditUser,
   useGetCredentials,
   useGetLowBalanceThreshold,
@@ -85,6 +91,7 @@ import {
   useSyncServices,
   useVerifyPayment,
 } from "./hooks/useQueries";
+import { fetchIggrowbotServices } from "./utils/iggrowbotSync";
 
 const DEFAULT_API_URL = "https://iggrowbot.com/api/v2";
 const UPI_ID = "8825245372-13c6@ibl";
@@ -670,11 +677,13 @@ function AdminDashboard({
   const { data: isConfigured = false } = useIsConfigured();
   const setThresholdMutation = useSetLowBalanceThreshold();
   const syncMutation = useSyncServices();
+  const browserSync = useBrowserSync();
   const saveMutation = useSaveCredentials();
   const { data: adminCreds } = useGetCredentials();
   const [adminApiKey, setAdminApiKey] = useState("");
 
   const isLow = providerBalance < lowBalanceThreshold;
+  const isSyncing = syncMutation.isPending || browserSync.isPending;
 
   const handleSetThreshold = () => {
     if (threshold === null) return;
@@ -685,10 +694,20 @@ function AdminDashboard({
   };
 
   const handleSync = () => {
-    syncMutation.mutate(undefined, {
-      onSuccess: () => toast.success("Services synced successfully!"),
-      onError: () => toast.error("Failed to sync services"),
-    });
+    const key = adminApiKey || adminCreds?.apiKey || "";
+    const url = adminCreds?.apiUrl || "https://iggrowbot.com/api/v2";
+    if (!key) {
+      toast.error("Please enter your IGGROWBOT API Key first");
+      return;
+    }
+    browserSync.mutate(
+      { apiKey: key, apiUrl: url },
+      {
+        onSuccess: (count) =>
+          toast.success(`${count} services synced successfully!`),
+        onError: (err) => toast.error(`Sync failed: ${(err as Error).message}`),
+      },
+    );
   };
 
   return (
@@ -805,23 +824,31 @@ function AdminDashboard({
                   { apiUrl: "https://iggrowbot.com/api/v2", apiKey: key },
                   {
                     onSuccess: () => {
-                      syncMutation.mutate(undefined, {
-                        onSuccess: () =>
-                          toast.success("API saved & services synced!"),
-                        onError: () => toast.error("Sync failed"),
-                      });
+                      browserSync.mutate(
+                        { apiKey: key, apiUrl: "https://iggrowbot.com/api/v2" },
+                        {
+                          onSuccess: (count) =>
+                            toast.success(
+                              `API saved! ${count} services imported.`,
+                            ),
+                          onError: (err) =>
+                            toast.error(
+                              `Sync failed: ${(err as Error).message}`,
+                            ),
+                        },
+                      );
                     },
                     onError: () => toast.error("Failed to save credentials"),
                   },
                 );
               }}
-              disabled={saveMutation.isPending || syncMutation.isPending}
+              disabled={saveMutation.isPending || isSyncing}
               className="gap-2 bg-amber-500 text-white hover:bg-amber-600 whitespace-nowrap font-semibold shrink-0"
               data-ocid="dashboard.save_sync_button"
             >
-              {saveMutation.isPending || syncMutation.isPending ? (
+              {saveMutation.isPending || isSyncing ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" /> Saving...
+                  <Loader2 className="w-4 h-4 animate-spin" /> Syncing...
                 </>
               ) : (
                 <>
@@ -923,11 +950,11 @@ function AdminDashboard({
           <CardContent className="space-y-2">
             <Button
               onClick={handleSync}
-              disabled={syncMutation.isPending}
+              disabled={isSyncing}
               className="w-full gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
               data-ocid="dashboard.primary_button"
             >
-              {syncMutation.isPending ? (
+              {isSyncing ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" /> Syncing...
                 </>
@@ -1062,8 +1089,10 @@ function UserDashboard({
   const { data: orders = [], isLoading: ordersLoading } = useGetMyOrders();
   const saveMutation2 = useSaveCredentials();
   const syncMutation2 = useSyncServices();
+  const browserSync2 = useBrowserSync();
   const { data: userCreds } = useGetCredentials();
   const [userApiKey, setUserApiKey] = useState("");
+  const isSyncing2 = syncMutation2.isPending || browserSync2.isPending;
   const recentOrders = orders.slice(0, 3);
 
   return (
@@ -1166,21 +1195,29 @@ function UserDashboard({
                   { apiUrl: "https://iggrowbot.com/api/v2", apiKey: key },
                   {
                     onSuccess: () => {
-                      syncMutation2.mutate(undefined, {
-                        onSuccess: () =>
-                          toast.success("API saved & services synced!"),
-                        onError: () => toast.error("Sync failed"),
-                      });
+                      browserSync2.mutate(
+                        { apiKey: key, apiUrl: "https://iggrowbot.com/api/v2" },
+                        {
+                          onSuccess: (count) =>
+                            toast.success(
+                              `API saved! ${count} services imported.`,
+                            ),
+                          onError: (err) =>
+                            toast.error(
+                              `Sync failed: ${(err as Error).message}`,
+                            ),
+                        },
+                      );
                     },
                     onError: () => toast.error("Failed to save credentials"),
                   },
                 );
               }}
-              disabled={saveMutation2.isPending || syncMutation2.isPending}
+              disabled={saveMutation2.isPending || isSyncing2}
               className="gap-2 bg-amber-500 text-white hover:bg-amber-600 whitespace-nowrap font-semibold shrink-0"
               data-ocid="dashboard.save_sync_button"
             >
-              {saveMutation2.isPending || syncMutation2.isPending ? (
+              {saveMutation2.isPending || isSyncing2 ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" /> Saving...
                 </>
@@ -1262,10 +1299,14 @@ function ServicesTab({ isAdmin }: { isAdmin: boolean }) {
   const services: IggrowbotService[] =
     rawServices.length > 0 ? rawServices : SEEDED_SERVICES;
   const syncMutation = useSyncServices();
+  const browserSyncServices = useBrowserSync();
+  const { data: serviceCreds } = useGetCredentials();
   const [search, setSearch] = useState("");
   const [selectedService, setSelectedService] =
     useState<IggrowbotService | null>(null);
   const [orderDialogOpen, setOrderDialogOpen] = useState(false);
+  const isServicesSyncing =
+    syncMutation.isPending || browserSyncServices.isPending;
 
   const filtered = services.filter(
     (s) =>
@@ -1284,10 +1325,19 @@ function ServicesTab({ isAdmin }: { isAdmin: boolean }) {
   );
 
   const handleSync = () => {
-    syncMutation.mutate(undefined, {
-      onSuccess: () => toast.success("Services synced!"),
-      onError: () => toast.error("Failed to sync services"),
-    });
+    const key = serviceCreds?.apiKey || "";
+    const url = serviceCreds?.apiUrl || "https://iggrowbot.com/api/v2";
+    if (!key) {
+      toast.error("Please set your IGGROWBOT API Key in Settings first");
+      return;
+    }
+    browserSyncServices.mutate(
+      { apiKey: key, apiUrl: url },
+      {
+        onSuccess: (count) => toast.success(`${count} services synced!`),
+        onError: (err) => toast.error(`Sync failed: ${(err as Error).message}`),
+      },
+    );
   };
 
   return (
@@ -1308,11 +1358,11 @@ function ServicesTab({ isAdmin }: { isAdmin: boolean }) {
           <Button
             variant="outline"
             onClick={handleSync}
-            disabled={syncMutation.isPending}
+            disabled={isServicesSyncing}
             className="gap-2 border-primary/30 text-primary hover:bg-primary/10"
             data-ocid="services.sync_button"
           >
-            {syncMutation.isPending ? (
+            {isServicesSyncing ? (
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
               <RefreshCw className="w-4 h-4" />
@@ -1365,7 +1415,7 @@ function ServicesTab({ isAdmin }: { isAdmin: boolean }) {
               disabled={syncMutation.isPending}
               className="mt-4 gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
             >
-              {syncMutation.isPending ? (
+              {isServicesSyncing ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" /> Syncing...
                 </>
@@ -1503,6 +1553,7 @@ function AddFundsTab() {
   const [submitted, setSubmitted] = useState(false);
   const [checkingPayment, setCheckingPayment] = useState(false);
   const submitPayment = useSubmitPayment();
+  const { identity, login } = useInternetIdentity();
   const { data: myPayments = [], isLoading: paymentsLoading } =
     useGetMyPayments();
 
@@ -1513,6 +1564,12 @@ function AddFundsTab() {
   };
 
   const handleSubmit = () => {
+    if (!identity) {
+      toast.error(
+        "Pehle login karein. Please login with Internet Identity to submit payment.",
+      );
+      return;
+    }
     const amountNum = Number.parseFloat(amount);
     if (!utr.trim() || utr.trim().length < 6) {
       toast.error("Enter a valid UTR/Transaction ID (min 6 characters)");
@@ -1534,7 +1591,19 @@ function AddFundsTab() {
         },
         onError: (err) => {
           console.error(err);
-          toast.error("Failed to submit payment. UTR may already be used.");
+          const msg = err instanceof Error ? err.message : String(err);
+          if (
+            msg.includes("User is not registered") ||
+            msg.includes("not registered")
+          ) {
+            toast.error("Please login first to submit payment.");
+          } else if (msg.includes("UTR already submitted")) {
+            toast.error(
+              "This UTR was already submitted. If your payment was not credited, please contact admin with your Transaction ID.",
+            );
+          } else {
+            toast.error("Failed to submit payment. Please try again.");
+          }
         },
       },
     );
@@ -1726,22 +1795,32 @@ function AddFundsTab() {
             )}
           </Button>
 
-          <Button
-            onClick={handleSubmit}
-            disabled={submitPayment.isPending}
-            className="w-full gap-2 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
-            data-ocid="add_funds.submit.button"
-          >
-            {submitPayment.isPending ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" /> Submitting...
-              </>
-            ) : (
-              <>
-                <Wallet className="w-4 h-4" /> Submit Payment
-              </>
-            )}
-          </Button>
+          {!identity ? (
+            <Button
+              onClick={login}
+              className="w-full gap-2 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
+              data-ocid="add_funds.submit.button"
+            >
+              <LogIn className="w-4 h-4" /> Login to Submit Payment
+            </Button>
+          ) : (
+            <Button
+              onClick={handleSubmit}
+              disabled={submitPayment.isPending}
+              className="w-full gap-2 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
+              data-ocid="add_funds.submit.button"
+            >
+              {submitPayment.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" /> Submitting...
+                </>
+              ) : (
+                <>
+                  <Wallet className="w-4 h-4" /> Submit Payment
+                </>
+              )}
+            </Button>
+          )}
         </CardContent>
       </Card>
 
@@ -1922,6 +2001,10 @@ function AdminPanelTab() {
   const [creditPrincipal, setCreditPrincipal] = useState("");
   const [creditAmount, setCreditAmount] = useState("");
   const [verifyingUtr, setVerifyingUtr] = useState<string | null>(null);
+  const manualCreditMutation = useAdminManualCredit();
+  const [mcUtr, setMcUtr] = useState("");
+  const [mcAmount, setMcAmount] = useState("");
+  const [mcPrincipal, setMcPrincipal] = useState("");
 
   const handleVerify = (utr: string) => {
     setVerifyingUtr(utr);
@@ -2138,6 +2221,113 @@ function AdminPanelTab() {
             ) : (
               <>
                 <Wallet className="w-4 h-4" /> Credit Wallet
+              </>
+            )}
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Manual Credit Card */}
+      <Card className="border-green-500/30 bg-card">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base font-semibold flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-green-500" />
+            Manual Credit
+          </CardTitle>
+          <CardDescription className="text-xs text-muted-foreground">
+            Use this to manually approve payments that show &quot;UTR already
+            used&quot; error
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-1.5">
+            <Label className="text-sm font-medium text-foreground">
+              Transaction ID / UTR
+            </Label>
+            <Input
+              type="text"
+              value={mcUtr}
+              onChange={(e) => setMcUtr(e.target.value)}
+              placeholder="e.g. 892468810500"
+              className="bg-input border-border font-mono text-sm focus-visible:ring-primary/50"
+              data-ocid="admin.manual_credit.utr.input"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-sm font-medium text-foreground">
+              Amount (₹)
+            </Label>
+            <Input
+              type="number"
+              min={1}
+              step={1}
+              value={mcAmount}
+              onChange={(e) => setMcAmount(e.target.value)}
+              placeholder="e.g. 10"
+              className="bg-input border-border font-mono text-sm focus-visible:ring-primary/50"
+              data-ocid="admin.manual_credit.amount.input"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-sm font-medium text-foreground">
+              User Principal ID
+            </Label>
+            <Input
+              type="text"
+              value={mcPrincipal}
+              onChange={(e) => setMcPrincipal(e.target.value)}
+              placeholder="Paste user's Principal ID"
+              className="bg-input border-border font-mono text-sm focus-visible:ring-primary/50"
+              data-ocid="admin.manual_credit.user.input"
+            />
+          </div>
+          <Button
+            onClick={() => {
+              const amt = Number.parseFloat(mcAmount);
+              if (!mcUtr.trim()) {
+                toast.error("Enter Transaction ID / UTR");
+                return;
+              }
+              if (!amt || amt <= 0) {
+                toast.error("Enter a valid amount");
+                return;
+              }
+              if (!mcPrincipal.trim()) {
+                toast.error("Enter user Principal ID");
+                return;
+              }
+              manualCreditMutation.mutate(
+                {
+                  utr: mcUtr.trim(),
+                  amount: amt,
+                  userPrincipal: mcPrincipal.trim(),
+                },
+                {
+                  onSuccess: () => {
+                    toast.success(`₹${amt} credited for UTR ${mcUtr.trim()}`);
+                    setMcUtr("");
+                    setMcAmount("");
+                    setMcPrincipal("");
+                  },
+                  onError: (err) => {
+                    const msg =
+                      err instanceof Error ? err.message : String(err);
+                    toast.error(msg || "Failed to credit user");
+                  },
+                },
+              );
+            }}
+            disabled={manualCreditMutation.isPending}
+            className="w-full sm:w-auto gap-2 bg-green-600 hover:bg-green-700 text-white font-semibold"
+            data-ocid="admin.manual_credit.submit_button"
+          >
+            {manualCreditMutation.isPending ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" /> Crediting...
+              </>
+            ) : (
+              <>
+                <CheckCircle2 className="w-4 h-4" /> Credit Now
               </>
             )}
           </Button>
@@ -2455,6 +2645,9 @@ function SettingsTab() {
   const saveMutation = useSaveCredentials();
   const setThresholdMutation = useSetLowBalanceThreshold();
   const syncMutation = useSyncServices();
+  const browserSyncSettings = useBrowserSync();
+  const isSettingsSyncing =
+    syncMutation.isPending || browserSyncSettings.isPending;
 
   useEffect(() => {
     if (credentials) {
@@ -2485,10 +2678,28 @@ function SettingsTab() {
   };
 
   const handleSync = () => {
-    syncMutation.mutate(undefined, {
-      onSuccess: () => toast.success("Services synced successfully!"),
-      onError: () => toast.error("Failed to sync services"),
-    });
+    if (!apiKey) {
+      toast.error("Please enter your IGGROWBOT API Key first");
+      return;
+    }
+    // Save then sync
+    saveMutation.mutate(
+      { apiUrl, apiKey },
+      {
+        onSuccess: () => {
+          browserSyncSettings.mutate(
+            { apiKey, apiUrl },
+            {
+              onSuccess: (count) =>
+                toast.success(`${count} services synced successfully!`),
+              onError: (err) =>
+                toast.error(`Sync failed: ${(err as Error).message}`),
+            },
+          );
+        },
+        onError: () => toast.error("Failed to save credentials"),
+      },
+    );
   };
 
   return (
@@ -2656,18 +2867,18 @@ function SettingsTab() {
         <CardContent>
           <Button
             onClick={handleSync}
-            disabled={syncMutation.isPending}
+            disabled={isSettingsSyncing}
             className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold text-base px-6 py-3 h-auto"
             data-ocid="settings.sync_services.button"
           >
-            {syncMutation.isPending ? (
+            {isSettingsSyncing ? (
               <span
                 data-ocid="settings.sync_services.loading_state"
                 className="flex items-center gap-2"
               >
                 <Loader2 className="w-4 h-4 animate-spin" /> Syncing Services...
               </span>
-            ) : syncMutation.isSuccess ? (
+            ) : browserSyncSettings.isSuccess ? (
               <span
                 data-ocid="settings.sync_services.success_state"
                 className="flex items-center gap-2"
@@ -2702,10 +2913,10 @@ function WelcomeScreen({ onContinue }: { onContinue: () => void }) {
             <Zap className="w-8 h-8 text-primary" />
           </div>
           <h1 className="font-display font-bold text-3xl text-foreground">
-            BharatSMM
+            Sandeep SMM
           </h1>
           <p className="text-muted-foreground text-sm">
-            Powered by IGGROWBOT API — Professional SMM Panel
+            Welcome to Sandeep's Official Panel
           </p>
         </div>
 
@@ -2793,10 +3004,10 @@ export default function App() {
             </div>
             <div>
               <h1 className="font-display font-bold text-sm sm:text-base text-foreground leading-tight">
-                BharatSMM
+                Sandeep SMM
               </h1>
               <p className="text-xs text-muted-foreground leading-none hidden sm:block">
-                {isAdmin ? "Admin Panel" : "User Panel"} · IGGROWBOT
+                Sandeep Digital
               </p>
             </div>
           </div>
@@ -2812,7 +3023,7 @@ export default function App() {
                 size="sm"
                 variant="outline"
                 onClick={() => setActiveTab("settings")}
-                className="gap-1.5 border-primary/30 text-primary hover:bg-primary/10 text-xs hidden sm:inline-flex"
+                className="gap-1.5 border-primary/30 text-primary hover:bg-primary/10 text-xs inline-flex"
                 data-ocid="header.admin_config_button"
               >
                 <SlidersHorizontal className="w-3.5 h-3.5" />
@@ -2907,11 +3118,46 @@ export default function App() {
         </Tabs>
       </main>
 
+      {/* Mobile bottom navigation */}
+      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border sm:hidden">
+        <div className="flex items-center justify-around px-2 py-2">
+          {[
+            { id: "dashboard", label: "Home", icon: LayoutDashboard },
+            { id: "new-order", label: "Order", icon: ShoppingCart },
+            { id: "add-funds", label: "Funds", icon: Wallet },
+            ...(isAdmin ? [{ id: "admin", label: "Admin", icon: Users }] : []),
+            { id: "settings", label: "API Setup", icon: Settings },
+          ].map((tab) => {
+            const Icon = tab.icon;
+            const active = activeTab === tab.id;
+            return (
+              <button
+                type="button"
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg transition-all ${
+                  active
+                    ? "text-primary bg-primary/10"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+                data-ocid={`mobile_nav.${tab.id.replace("-", "_")}_tab`}
+              >
+                <Icon className="w-5 h-5" />
+                <span className="text-[10px] font-medium leading-none">
+                  {tab.label}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </nav>
+      <div className="h-16 sm:hidden" />
+
       {/* Footer */}
       <footer className="border-t border-border mt-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between flex-wrap gap-2">
           <p className="text-xs text-muted-foreground">
-            © {new Date().getFullYear()} BharatSMM · Powered by IGGROWBOT
+            Copyright © 2026 Sandeep
           </p>
           <p className="text-xs text-muted-foreground">
             Built with ♥ using{" "}
