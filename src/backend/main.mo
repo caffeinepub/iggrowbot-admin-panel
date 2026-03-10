@@ -6,11 +6,9 @@ import Runtime "mo:core/Runtime";
 import Iter "mo:core/Iter";
 import Time "mo:core/Time";
 import OutCall "http-outcalls/outcall";
-import AccessControl "authorization/access-control";
 import List "mo:core/List";
-
+import AccessControl "authorization/access-control";
 import MixinAuthorization "authorization/MixinAuthorization";
-
 
 actor {
   let lowBalanceThresholdDefault = 5.0;

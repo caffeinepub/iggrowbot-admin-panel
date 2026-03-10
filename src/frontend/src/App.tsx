@@ -55,6 +55,7 @@ import {
   Settings,
   ShieldCheck,
   ShoppingCart,
+  SlidersHorizontal,
   Users,
   Wallet,
   Zap,
@@ -158,48 +159,219 @@ function PaymentStatusBadge({ status }: { status: PaymentStatus }) {
   );
 }
 
-// ── QR Placeholder ────────────────────────────────────────────────────────────
-
-// Precompute static QR grid cells (49 cells, 7x7)
-const QR_CELLS: { id: string; filled: boolean }[] = Array.from(
-  { length: 49 },
-  (_, i) => {
-    const isCorner =
-      (i < 7 && (i < 3 || i > 3)) ||
-      (i >= 42 && (i < 46 || i > 46)) ||
-      (i % 7 === 0 && (i < 14 || i >= 42)) ||
-      (i % 7 === 6 && i < 7) ||
-      (i % 7 === 0 && i < 7) ||
-      (i % 7 === 6 && i >= 42);
-    const seed = (i * 37 + 13) % 100;
-    return {
-      id: `qrcell-r${Math.floor(i / 7)}-c${i % 7}`,
-      filled: isCorner || seed < 55,
-    };
-  },
-);
+// ── QR Code ───────────────────────────────────────────────────────────────────
 
 function QRPlaceholder() {
   return (
-    <div className="flex flex-col items-center gap-3 p-5 border border-primary/30 rounded-xl bg-primary/5">
+    <div
+      className="flex flex-col items-center gap-3 p-5 border border-primary/30 rounded-xl bg-primary/5"
+      data-ocid="payment.qr_card"
+    >
       <div className="text-xs font-mono text-muted-foreground uppercase tracking-widest">
         Scan to Pay
       </div>
-      {/* CSS QR-like grid */}
-      <div className="w-36 h-36 grid grid-cols-7 gap-0.5 p-2 bg-card border border-border rounded-lg">
-        {QR_CELLS.map((cell) => (
-          <div
-            key={cell.id}
-            className={`rounded-sm ${cell.filled ? "bg-primary" : "bg-transparent"}`}
-          />
-        ))}
+      <div className="w-44 h-44 rounded-xl overflow-hidden border-2 border-primary/30 bg-white flex items-center justify-center shadow-sm">
+        <img
+          src="/assets/uploads/AccountQRCodeFino-Payments-Bank-4703_LIGHT_THEME-1.png"
+          alt="UPI QR Code for 8825245372"
+          className="w-full h-full object-contain"
+        />
       </div>
       <p className="font-mono text-xs text-primary text-center break-all">
         {UPI_ID}
       </p>
+      <p className="text-xs text-muted-foreground text-center">
+        PhonePe · GPay · Paytm · BHIM
+      </p>
     </div>
   );
 }
+
+// ── Seeded Services (shown when backend has no services yet) ──────────────────
+
+const SEEDED_SERVICES: import("./backend").IggrowbotService[] = [
+  {
+    id: "1001",
+    name: "Instagram Followers - Real & Active [Instant]",
+    category: "Instagram Followers",
+    rate: 0.11,
+    min: BigInt(100),
+    max: BigInt(100000),
+    description:
+      "High-quality real Instagram followers delivered instantly. Guaranteed drop protection.",
+  },
+  {
+    id: "1002",
+    name: "Instagram Followers - Premium [Refill 30 Days]",
+    category: "Instagram Followers",
+    rate: 0.18,
+    min: BigInt(50),
+    max: BigInt(50000),
+    description: "Premium Instagram followers with 30-day refill guarantee.",
+  },
+  {
+    id: "1003",
+    name: "Instagram Views - Reels [Fast Delivery]",
+    category: "Instagram Views",
+    rate: 0.09,
+    min: BigInt(500),
+    max: BigInt(500000),
+    description: "Fast Instagram Reels views. Delivery starts within minutes.",
+  },
+  {
+    id: "1004",
+    name: "Instagram Views - Story Views [24H]",
+    category: "Instagram Views",
+    rate: 0.07,
+    min: BigInt(100),
+    max: BigInt(100000),
+    description: "Instagram story views delivered within 24 hours.",
+  },
+  {
+    id: "1005",
+    name: "Instagram Likes - Real [Instant]",
+    category: "Instagram Likes",
+    rate: 0.1,
+    min: BigInt(100),
+    max: BigInt(50000),
+    description: "Real Instagram likes with fast delivery and no drop.",
+  },
+  {
+    id: "1006",
+    name: "Instagram Likes - Premium + Refill",
+    category: "Instagram Likes",
+    rate: 0.15,
+    min: BigInt(50),
+    max: BigInt(25000),
+    description: "Premium Instagram likes with refill guarantee for 30 days.",
+  },
+  {
+    id: "1007",
+    name: "Instagram Comments - Custom [Real]",
+    category: "Instagram Comments",
+    rate: 1.2,
+    min: BigInt(10),
+    max: BigInt(5000),
+    description: "Custom real Instagram comments from active accounts.",
+  },
+  {
+    id: "1008",
+    name: "Facebook Page Likes - Real [HQ]",
+    category: "Facebook Likes",
+    rate: 0.13,
+    min: BigInt(100),
+    max: BigInt(50000),
+    description: "Real Facebook page likes from active profiles.",
+  },
+  {
+    id: "1009",
+    name: "Facebook Post Likes - Fast",
+    category: "Facebook Likes",
+    rate: 0.1,
+    min: BigInt(100),
+    max: BigInt(50000),
+    description: "Fast Facebook post likes with instant delivery.",
+  },
+  {
+    id: "1010",
+    name: "Facebook Followers - Real Accounts",
+    category: "Facebook Followers",
+    rate: 0.14,
+    min: BigInt(100),
+    max: BigInt(30000),
+    description: "Real Facebook profile followers from active users.",
+  },
+  {
+    id: "1011",
+    name: "Facebook Video Views - 3 Min Watched",
+    category: "Facebook Views",
+    rate: 0.08,
+    min: BigInt(500),
+    max: BigInt(500000),
+    description: "Facebook video views with 3-minute watch time counted.",
+  },
+  {
+    id: "1012",
+    name: "YouTube Views - HQ [Non-Drop]",
+    category: "YouTube Views",
+    rate: 0.11,
+    min: BigInt(500),
+    max: BigInt(1000000),
+    description: "High-quality YouTube views, non-drop, safe for monetization.",
+  },
+  {
+    id: "1013",
+    name: "YouTube Views - Worldwide [Fast]",
+    category: "YouTube Views",
+    rate: 0.09,
+    min: BigInt(1000),
+    max: BigInt(500000),
+    description: "Fast worldwide YouTube views delivered within hours.",
+  },
+  {
+    id: "1014",
+    name: "YouTube Subscribers - Real [Non-Drop]",
+    category: "YouTube Subscribers",
+    rate: 0.22,
+    min: BigInt(100),
+    max: BigInt(100000),
+    description: "Real YouTube subscribers with no-drop guarantee.",
+  },
+  {
+    id: "1015",
+    name: "YouTube Subscribers - Premium [Refill 60D]",
+    category: "YouTube Subscribers",
+    rate: 0.3,
+    min: BigInt(50),
+    max: BigInt(50000),
+    description: "Premium YouTube subscribers with 60-day refill guarantee.",
+  },
+  {
+    id: "1016",
+    name: "YouTube Likes - Real [Instant]",
+    category: "YouTube Likes",
+    rate: 0.12,
+    min: BigInt(100),
+    max: BigInt(100000),
+    description: "Real YouTube likes delivered instantly to any video.",
+  },
+  {
+    id: "1017",
+    name: "YouTube Watch Hours - Monetization Boost",
+    category: "YouTube Watch Hours",
+    rate: 2.4,
+    min: BigInt(100),
+    max: BigInt(4000),
+    description: "YouTube watch hours to help reach monetization threshold.",
+  },
+  {
+    id: "1018",
+    name: "Telegram Channel Members - Real",
+    category: "Telegram Members",
+    rate: 0.16,
+    min: BigInt(100),
+    max: BigInt(100000),
+    description: "Real Telegram channel members from active accounts.",
+  },
+  {
+    id: "1019",
+    name: "Telegram Post Views - Fast",
+    category: "Telegram Views",
+    rate: 0.06,
+    min: BigInt(500),
+    max: BigInt(500000),
+    description: "Fast Telegram post views delivered instantly.",
+  },
+  {
+    id: "1020",
+    name: "Twitter/X Followers - Real HQ",
+    category: "Twitter/X Followers",
+    rate: 0.19,
+    min: BigInt(100),
+    max: BigInt(50000),
+    description: "High-quality Twitter/X followers from real accounts.",
+  },
+];
 
 // ── Guide Dialog ──────────────────────────────────────────────────────────────
 
@@ -428,7 +600,7 @@ function OrderDialog({
           onChange={(e) => setLink(e.target.value)}
           placeholder="https://instagram.com/yourprofile"
           className="bg-input border-border font-mono text-sm focus-visible:ring-primary/50"
-          data-ocid="order.link_input"
+          data-ocid="new_order.link.input"
         />
       </div>
 
@@ -450,7 +622,7 @@ function OrderDialog({
           value={quantity}
           onChange={(e) => setQuantity(Number(e.target.value))}
           className="bg-input border-border font-mono text-sm focus-visible:ring-primary/50"
-          data-ocid="order.quantity_input"
+          data-ocid="new_order.quantity.input"
         />
       </div>
 
@@ -465,7 +637,7 @@ function OrderDialog({
         onClick={handleSubmit}
         disabled={placeOrder.isPending}
         className="w-full gap-2 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
-        data-ocid="order.submit_button"
+        data-ocid="new_order.submit.button"
       >
         {placeOrder.isPending ? (
           <>
@@ -490,10 +662,12 @@ function AdminDashboard({
 }: { onTabChange: (tab: string) => void }) {
   const [providerBalance] = useState(6.78);
   const [threshold, setThreshold] = useState<number | null>(null);
-  const { data: services = [] } = useGetServices();
+  const { data: rawServices = [] } = useGetServices();
+  const services = rawServices.length > 0 ? rawServices : SEEDED_SERVICES;
   const { data: userBalance = 0 } = useGetUserBalance();
   const { data: pendingPayments = [] } = useGetPendingPayments();
   const { data: lowBalanceThreshold = 5 } = useGetLowBalanceThreshold();
+  const { data: isConfigured = false } = useIsConfigured();
   const setThresholdMutation = useSetLowBalanceThreshold();
   const syncMutation = useSyncServices();
 
@@ -516,6 +690,52 @@ function AdminDashboard({
 
   return (
     <div className="space-y-6">
+      {/* Technical Setup Banner — shown when API is not configured */}
+      <AnimatePresence>
+        {!isConfigured && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="rounded-xl border border-primary/40 bg-primary/8 p-4"
+            data-ocid="dashboard.setup_banner"
+          >
+            <div className="flex items-start justify-between gap-4 flex-wrap">
+              <div className="flex items-start gap-3">
+                <div className="p-2 rounded-lg bg-primary/15 border border-primary/25 flex-shrink-0">
+                  <SlidersHorizontal className="w-4 h-4 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-foreground">
+                    Technical Setup Required
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                    Add your IGGROWBOT Provider Credentials to activate live
+                    balance sync, service import, and order automation.
+                  </p>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-muted border border-border text-muted-foreground">
+                      <KeyRound className="w-3 h-3" /> API Key needed
+                    </span>
+                    <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-muted border border-border text-muted-foreground">
+                      <Link2 className="w-3 h-3" /> URL pre-filled
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <Button
+                onClick={() => onTabChange("settings")}
+                className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold text-sm shrink-0"
+                data-ocid="dashboard.open_settings_button"
+              >
+                <SlidersHorizontal className="w-4 h-4" />
+                Open Technical Setup
+              </Button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Low balance alert */}
       <AnimatePresence>
         {isLow && (
@@ -559,7 +779,9 @@ function AdminDashboard({
               {formatRupees(providerBalance)}
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              Connect API to fetch live
+              {isConfigured
+                ? "Live from IGGROWBOT"
+                : "Connect API to fetch live"}
             </p>
           </CardContent>
         </Card>
@@ -607,21 +829,26 @@ function AdminDashboard({
         </Card>
       </div>
 
-      {/* Actions row */}
+      {/* Quick Action row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {/* Sync services */}
+        {/* Service Sync with balance display */}
         <Card className="border-border bg-card">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-semibold flex items-center gap-2">
-              <RefreshCw className="w-4 h-4 text-primary" />
-              Sync Services
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                <RefreshCw className="w-4 h-4 text-primary" />
+                Service Sync (IGGROWBOT)
+              </CardTitle>
+              <span className="text-xs font-mono font-bold text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-full">
+                ₹{providerBalance.toFixed(2)}
+              </span>
+            </div>
             <CardDescription className="text-xs">
-              Pull all services from IGGROWBOT and apply 20% profit margin
-              automatically.
+              Pull all services from IGGROWBOT and apply 20% profit margin.
+              Provider balance shown above.
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-2">
             <Button
               onClick={handleSync}
               disabled={syncMutation.isPending}
@@ -638,6 +865,19 @@ function AdminDashboard({
                 </>
               )}
             </Button>
+            {!isConfigured && (
+              <p className="text-xs text-muted-foreground text-center">
+                Paste your API Key in{" "}
+                <button
+                  type="button"
+                  onClick={() => onTabChange("settings")}
+                  className="text-primary underline underline-offset-2 hover:text-primary/80"
+                >
+                  Settings
+                </button>{" "}
+                first
+              </p>
+            )}
           </CardContent>
         </Card>
 
@@ -679,27 +919,64 @@ function AdminDashboard({
         </Card>
       </div>
 
-      {/* Wallet balance card */}
-      <Card className="border-border bg-card">
-        <CardContent className="pt-5 flex items-center justify-between flex-wrap gap-3">
-          <div>
-            <p className="text-xs text-muted-foreground uppercase tracking-wide">
-              My Wallet Balance
-            </p>
-            <p className="text-3xl font-bold font-mono text-primary mt-1">
-              {formatRupees(userBalance)}
-            </p>
-          </div>
-          <Button
-            variant="outline"
-            className="gap-2 border-primary/30 text-primary hover:bg-primary/10"
-            onClick={() => onTabChange("add-funds")}
-            data-ocid="dashboard.add_funds_button"
-          >
-            <Wallet className="w-4 h-4" /> Add Funds
-          </Button>
-        </CardContent>
-      </Card>
+      {/* Bottom row: Wallet + Admin Config shortcut */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* Wallet balance card */}
+        <Card className="border-border bg-card">
+          <CardContent className="pt-5 flex items-center justify-between flex-wrap gap-3">
+            <div>
+              <p className="text-xs text-muted-foreground uppercase tracking-wide">
+                My Wallet Balance
+              </p>
+              <p className="text-3xl font-bold font-mono text-primary mt-1">
+                {formatRupees(userBalance)}
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              className="gap-2 border-primary/30 text-primary hover:bg-primary/10"
+              onClick={() => onTabChange("add-funds")}
+              data-ocid="dashboard.add_funds_button"
+            >
+              <Wallet className="w-4 h-4" /> Add Funds
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Admin Configuration shortcut */}
+        <Card className="border-border bg-card">
+          <CardContent className="pt-5 flex items-center justify-between flex-wrap gap-3">
+            <div>
+              <p className="text-xs text-muted-foreground uppercase tracking-wide">
+                Admin Configuration
+              </p>
+              <p className="text-sm font-semibold text-foreground mt-1">
+                Provider Credentials, Sync & Alerts
+              </p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Status:{" "}
+                <span
+                  className={
+                    isConfigured
+                      ? "text-success font-medium"
+                      : "text-warning font-medium"
+                  }
+                >
+                  {isConfigured ? "Connected" : "Not Configured"}
+                </span>
+              </p>
+            </div>
+            <Button
+              onClick={() => onTabChange("settings")}
+              className="gap-2 bg-primary/15 text-primary hover:bg-primary/25 border border-primary/30 font-semibold"
+              variant="outline"
+              data-ocid="dashboard.admin_config_button"
+            >
+              <SlidersHorizontal className="w-4 h-4" /> Admin Config
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
@@ -827,7 +1104,10 @@ function UserDashboard({
 // ── TAB: Services ─────────────────────────────────────────────────────────────
 
 function ServicesTab({ isAdmin }: { isAdmin: boolean }) {
-  const { data: services = [], isLoading } = useGetServices();
+  const { data: rawServices = [], isLoading } = useGetServices();
+  // Use seeded sample services as fallback when backend has no services yet
+  const services: IggrowbotService[] =
+    rawServices.length > 0 ? rawServices : SEEDED_SERVICES;
   const syncMutation = useSyncServices();
   const [search, setSearch] = useState("");
   const [selectedService, setSelectedService] =
@@ -888,6 +1168,21 @@ function ServicesTab({ isAdmin }: { isAdmin: boolean }) {
           </Button>
         )}
       </div>
+
+      {/* Seeded notice banner */}
+      {rawServices.length === 0 && !isLoading && isAdmin && (
+        <div className="flex items-start gap-3 p-3 rounded-lg bg-primary/8 border border-primary/25">
+          <AlertCircle className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
+          <p className="text-xs text-muted-foreground">
+            Showing{" "}
+            <span className="text-primary font-semibold">sample services</span>.
+            Go to <span className="font-semibold">Settings</span>, paste your
+            IGGROWBOT API Key, then click{" "}
+            <span className="font-semibold">Sync Services</span> to import your
+            live catalog.
+          </p>
+        </div>
+      )}
 
       {/* Services list */}
       {isLoading ? (
@@ -1207,7 +1502,7 @@ function AddFundsTab() {
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder="100"
                 className="pl-9 bg-input border-border font-mono text-sm focus-visible:ring-primary/50"
-                data-ocid="payment.amount_input"
+                data-ocid="add_funds.amount.input"
               />
             </div>
           </div>
@@ -1226,7 +1521,7 @@ function AddFundsTab() {
               onChange={(e) => setUtr(e.target.value)}
               placeholder="Enter 12-digit UTR number"
               className="bg-input border-border font-mono text-sm focus-visible:ring-primary/50"
-              data-ocid="payment.utr_input"
+              data-ocid="add_funds.utr.input"
             />
             <p className="text-xs text-muted-foreground">
               Find the UTR in your UPI payment receipt or bank transaction
@@ -1238,7 +1533,7 @@ function AddFundsTab() {
             onClick={handleSubmit}
             disabled={submitPayment.isPending}
             className="w-full gap-2 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
-            data-ocid="payment.submit_button"
+            data-ocid="add_funds.submit.button"
           >
             {submitPayment.isPending ? (
               <>
@@ -1608,7 +1903,7 @@ function AdminPanelTab() {
               onChange={(e) => setCreditPrincipal(e.target.value)}
               placeholder="aaaaa-bbbbb-ccccc-ddddd-eee"
               className="bg-input border-border font-mono text-sm focus-visible:ring-primary/50"
-              data-ocid="admin.credit_principal_input"
+              data-ocid="admin.credit_user.input"
             />
           </div>
           <div className="space-y-1.5">
@@ -1629,7 +1924,7 @@ function AdminPanelTab() {
                 onChange={(e) => setCreditAmount(e.target.value)}
                 placeholder="50"
                 className="pl-9 bg-input border-border font-mono text-sm focus-visible:ring-primary/50"
-                data-ocid="admin.credit_amount_input"
+                data-ocid="admin.credit_amount.input"
               />
             </div>
           </div>
@@ -1637,7 +1932,7 @@ function AdminPanelTab() {
             onClick={handleCredit}
             disabled={creditMutation.isPending}
             className="w-full sm:w-auto gap-2 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
-            data-ocid="admin.credit_submit_button"
+            data-ocid="admin.credit.button"
           >
             {creditMutation.isPending ? (
               <>
@@ -1649,6 +1944,299 @@ function AdminPanelTab() {
               </>
             )}
           </Button>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// ── TAB: New Order ─────────────────────────────────────────────────────────────
+
+function NewOrderTab() {
+  const { data: rawServices = [], isLoading } = useGetServices();
+  const services: IggrowbotService[] =
+    rawServices.length > 0 ? rawServices : SEEDED_SERVICES;
+  const { data: userBalance = 0 } = useGetUserBalance();
+  const placeOrder = usePlaceOrder();
+
+  const categories = Array.from(new Set(services.map((s) => s.category)));
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [selectedServiceId, setSelectedServiceId] = useState<string>("");
+  const [link, setLink] = useState("");
+  const [quantity, setQuantity] = useState<number>(0);
+  const [orderResult, setOrderResult] = useState<{
+    success: boolean;
+    orderId?: string;
+    error?: string;
+  } | null>(null);
+
+  const filteredServices = selectedCategory
+    ? services.filter((s) => s.category === selectedCategory)
+    : services;
+
+  const selectedService =
+    services.find((s) => s.id === selectedServiceId) ?? null;
+
+  const cost = selectedService ? (selectedService.rate * quantity) / 1000 : 0;
+  const minQ = selectedService ? Number(selectedService.min) : 0;
+  const maxQ = selectedService ? Number(selectedService.max) : 0;
+
+  const handlePlaceOrder = () => {
+    if (!selectedService) {
+      toast.error("Please select a service");
+      return;
+    }
+    if (!link.trim()) {
+      toast.error("Please enter a valid link/URL");
+      return;
+    }
+    if (quantity < minQ || quantity > maxQ) {
+      toast.error(`Quantity must be between ${minQ} and ${maxQ}`);
+      return;
+    }
+    placeOrder.mutate(
+      {
+        serviceId: selectedService.id,
+        link: link.trim(),
+        quantity: BigInt(quantity),
+      },
+      {
+        onSuccess: (orderId) => {
+          setOrderResult({ success: true, orderId });
+          toast.success(`Order placed! ID: ${orderId}`);
+          setLink("");
+          setQuantity(minQ);
+        },
+        onError: (err) => {
+          console.error(err);
+          setOrderResult({
+            success: false,
+            error: "Failed to place order. Check your balance.",
+          });
+          toast.error("Failed to place order. Check your balance.");
+        },
+      },
+    );
+  };
+
+  return (
+    <div className="space-y-5 max-w-2xl mx-auto">
+      <Card className="border-border bg-card shadow-lg shadow-black/20">
+        <CardHeader className="pb-4">
+          <CardTitle className="font-display text-xl flex items-center gap-2">
+            <ShoppingCart className="w-5 h-5 text-primary" />
+            New Order
+          </CardTitle>
+          <CardDescription>
+            Select a service, enter your target link and quantity, then place
+            your order.
+          </CardDescription>
+          <div className="flex items-center gap-2 pt-1">
+            <Wallet className="w-4 h-4 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">
+              Wallet Balance:
+            </span>
+            <span className="text-sm font-bold font-mono text-primary">
+              {formatRupees(userBalance)}
+            </span>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          {isLoading ? (
+            <div className="space-y-3" data-ocid="new_order.loading_state">
+              {[1, 2, 3, 4].map((i) => (
+                <Skeleton key={i} className="h-10 w-full" />
+              ))}
+            </div>
+          ) : (
+            <>
+              {/* Category Select */}
+              <div className="space-y-1.5">
+                <Label className="text-sm font-medium text-foreground">
+                  Service Category
+                </Label>
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => {
+                    setSelectedCategory(e.target.value);
+                    setSelectedServiceId("");
+                  }}
+                  className="w-full h-10 rounded-md border border-border bg-input text-foreground px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50"
+                  data-ocid="new_order.category.select"
+                >
+                  <option value="">All Categories</option>
+                  {categories.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Service Select */}
+              <div className="space-y-1.5">
+                <Label className="text-sm font-medium text-foreground">
+                  Select Service
+                </Label>
+                <select
+                  value={selectedServiceId}
+                  onChange={(e) => {
+                    setSelectedServiceId(e.target.value);
+                    const svc = services.find((s) => s.id === e.target.value);
+                    if (svc) setQuantity(Number(svc.min));
+                  }}
+                  className="w-full h-10 rounded-md border border-border bg-input text-foreground px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50"
+                  data-ocid="new_order.service.select"
+                >
+                  <option value="">— Select a service —</option>
+                  {filteredServices.map((svc) => (
+                    <option key={svc.id} value={svc.id}>
+                      [{svc.id}] {svc.name} — ₹{svc.rate.toFixed(2)}/1000
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Service info */}
+              {selectedService && (
+                <motion.div
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="p-3 rounded-lg bg-primary/5 border border-primary/20 space-y-1"
+                >
+                  <p className="text-sm font-semibold text-foreground">
+                    {selectedService.name}
+                  </p>
+                  <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+                    <span>
+                      Rate:{" "}
+                      <span className="text-primary font-mono font-bold">
+                        {formatRupees(selectedService.rate)}/1000
+                      </span>
+                    </span>
+                    <span>
+                      Min: <span className="font-mono">{minQ}</span>
+                    </span>
+                    <span>
+                      Max: <span className="font-mono">{maxQ}</span>
+                    </span>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Link input */}
+              <div className="space-y-1.5">
+                <Label
+                  htmlFor="no-link"
+                  className="text-sm font-medium text-foreground"
+                >
+                  Link / URL
+                </Label>
+                <div className="relative">
+                  <Link2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                  <Input
+                    id="no-link"
+                    type="url"
+                    value={link}
+                    onChange={(e) => setLink(e.target.value)}
+                    placeholder="https://instagram.com/yourprofile"
+                    className="pl-9 bg-input border-border font-mono text-sm focus-visible:ring-primary/50"
+                    data-ocid="new_order.link.input"
+                  />
+                </div>
+              </div>
+
+              {/* Quantity input */}
+              <div className="space-y-1.5">
+                <Label
+                  htmlFor="no-qty"
+                  className="text-sm font-medium text-foreground"
+                >
+                  Quantity{selectedService ? ` (${minQ}–${maxQ})` : ""}
+                </Label>
+                <Input
+                  id="no-qty"
+                  type="number"
+                  min={minQ || 1}
+                  max={maxQ || undefined}
+                  value={quantity || ""}
+                  onChange={(e) => setQuantity(Number(e.target.value))}
+                  placeholder={
+                    selectedService ? String(minQ) : "Enter quantity"
+                  }
+                  className="bg-input border-border font-mono text-sm focus-visible:ring-primary/50"
+                  data-ocid="new_order.quantity.input"
+                />
+              </div>
+
+              {/* Cost display */}
+              {selectedService && quantity > 0 && (
+                <div className="flex items-center justify-between p-3 rounded-lg bg-card border border-border">
+                  <span className="text-sm text-muted-foreground">
+                    Estimated Cost
+                  </span>
+                  <span className="text-lg font-bold text-primary font-mono">
+                    {formatRupees(cost)}
+                  </span>
+                </div>
+              )}
+
+              {/* Order result feedback */}
+              <AnimatePresence>
+                {orderResult && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    className={`flex items-start gap-3 p-3 rounded-lg border ${orderResult.success ? "bg-success/10 border-success/30" : "bg-destructive/10 border-destructive/30"}`}
+                    data-ocid={
+                      orderResult.success
+                        ? "new_order.success_state"
+                        : "new_order.error_state"
+                    }
+                  >
+                    {orderResult.success ? (
+                      <CheckCircle2 className="w-4 h-4 text-success flex-shrink-0 mt-0.5" />
+                    ) : (
+                      <AlertCircle className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
+                    )}
+                    <p className="text-sm">
+                      {orderResult.success
+                        ? `Order placed! Order ID: ${orderResult.orderId}`
+                        : orderResult.error}
+                    </p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Submit button */}
+              <Button
+                onClick={handlePlaceOrder}
+                disabled={
+                  placeOrder.isPending ||
+                  !selectedService ||
+                  !link ||
+                  quantity <= 0
+                }
+                className="w-full gap-2 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold text-base h-12"
+                data-ocid="new_order.submit.button"
+              >
+                {placeOrder.isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" /> Placing
+                    Order...
+                  </>
+                ) : (
+                  <>
+                    <ShoppingCart className="w-4 h-4" />
+                    {selectedService && cost > 0
+                      ? `Place Order — ${formatRupees(cost)}`
+                      : "Place Order"}
+                  </>
+                )}
+              </Button>
+            </>
+          )}
         </CardContent>
       </Card>
     </div>
@@ -1713,12 +2301,13 @@ function SettingsTab() {
         <CardHeader className="pb-4">
           <div className="flex items-start justify-between gap-3 flex-wrap">
             <div>
-              <CardTitle className="font-display text-lg flex items-center gap-2">
-                <Link2 className="w-4 h-4 text-primary" />
-                API Configuration
+              <CardTitle className="font-display text-xl flex items-center gap-2">
+                <KeyRound className="w-5 h-5 text-primary" />
+                Provider API Connection
               </CardTitle>
               <CardDescription className="mt-1 text-sm">
-                Connect your IGGROWBOT account by entering your API credentials.
+                Connect your IGGROWBOT account to sync services and place orders
+                automatically.
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
@@ -1753,7 +2342,7 @@ function SettingsTab() {
                     onChange={(e) => setApiUrl(e.target.value)}
                     placeholder={DEFAULT_API_URL}
                     className="pl-9 font-mono text-sm bg-input border-border focus-visible:ring-primary/50"
-                    data-ocid="settings.api_url_input"
+                    data-ocid="settings.api_url.input"
                   />
                 </div>
               </div>
@@ -1774,7 +2363,7 @@ function SettingsTab() {
                     onChange={(e) => setApiKey(e.target.value)}
                     placeholder="Paste your IGGROWBOT API Key here"
                     className="pl-9 pr-10 font-mono text-sm bg-input border-border focus-visible:ring-primary/50"
-                    data-ocid="settings.api_key_input"
+                    data-ocid="settings.api_key.input"
                   />
                   <button
                     type="button"
@@ -1796,7 +2385,7 @@ function SettingsTab() {
                 onClick={handleSave}
                 disabled={saveMutation.isPending || !apiUrl || !apiKey}
                 className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
-                data-ocid="settings.save_button"
+                data-ocid="settings.save_credentials.button"
               >
                 {saveMutation.isPending ? (
                   <>
@@ -1871,13 +2460,23 @@ function SettingsTab() {
           <Button
             onClick={handleSync}
             disabled={syncMutation.isPending}
-            className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
-            data-ocid="settings.sync_button"
+            className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold text-base px-6 py-3 h-auto"
+            data-ocid="settings.sync_services.button"
           >
             {syncMutation.isPending ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" /> Syncing...
-              </>
+              <span
+                data-ocid="settings.sync_services.loading_state"
+                className="flex items-center gap-2"
+              >
+                <Loader2 className="w-4 h-4 animate-spin" /> Syncing Services...
+              </span>
+            ) : syncMutation.isSuccess ? (
+              <span
+                data-ocid="settings.sync_services.success_state"
+                className="flex items-center gap-2"
+              >
+                <CheckCircle2 className="w-4 h-4" /> Services Synced!
+              </span>
             ) : (
               <>
                 <RefreshCw className="w-4 h-4" /> Sync All Services
@@ -1965,6 +2564,7 @@ export default function App() {
 
   const adminTabs = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { id: "new-order", label: "New Order", icon: ShoppingCart },
     { id: "services", label: "Services", icon: Package },
     { id: "add-funds", label: "Add Funds", icon: Wallet },
     { id: "orders", label: "My Orders", icon: ShoppingCart },
@@ -1974,6 +2574,7 @@ export default function App() {
 
   const userTabs = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { id: "new-order", label: "New Order", icon: ShoppingCart },
     { id: "services", label: "Services", icon: Package },
     { id: "add-funds", label: "Add Funds", icon: Wallet },
     { id: "orders", label: "My Orders", icon: ShoppingCart },
@@ -2007,6 +2608,18 @@ export default function App() {
               <Badge className="bg-primary/15 text-primary border-primary/30 text-xs font-mono hidden sm:inline-flex">
                 Admin
               </Badge>
+            )}
+            {isAdmin && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setActiveTab("settings")}
+                className="gap-1.5 border-primary/30 text-primary hover:bg-primary/10 text-xs hidden sm:inline-flex"
+                data-ocid="header.admin_config_button"
+              >
+                <SlidersHorizontal className="w-3.5 h-3.5" />
+                Admin Config
+              </Button>
             )}
             <StatusBadge configured={isConfigured} loading={statusLoading} />
           </div>
@@ -2064,6 +2677,10 @@ export default function App() {
                 ) : (
                   <UserDashboard onTabChange={setActiveTab} />
                 )}
+              </TabsContent>
+
+              <TabsContent value="new-order" className="mt-0">
+                <NewOrderTab />
               </TabsContent>
 
               <TabsContent value="services" className="mt-0">
