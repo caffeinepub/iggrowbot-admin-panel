@@ -172,7 +172,7 @@ function QRPlaceholder() {
       </div>
       <div className="w-44 h-44 rounded-xl overflow-hidden border-2 border-primary/30 bg-white flex items-center justify-center shadow-sm">
         <img
-          src="/assets/uploads/AccountQRCodeFino-Payments-Bank-4703_LIGHT_THEME-1.png"
+          src="/assets/uploads/AccountQRCodeFino-Payments-Bank-4703_LIGHT_THEME-1-1.png"
           alt="UPI QR Code for 8825245372"
           className="w-full h-full object-contain"
         />
@@ -670,6 +670,9 @@ function AdminDashboard({
   const { data: isConfigured = false } = useIsConfigured();
   const setThresholdMutation = useSetLowBalanceThreshold();
   const syncMutation = useSyncServices();
+  const saveMutation = useSaveCredentials();
+  const { data: adminCreds } = useGetCredentials();
+  const [adminApiKey, setAdminApiKey] = useState("");
 
   const isLow = providerBalance < lowBalanceThreshold;
 
@@ -760,6 +763,75 @@ function AdminDashboard({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* BIG ADMIN SETTINGS BUTTON */}
+      <Button
+        onClick={() => onTabChange("settings")}
+        className="w-full py-5 text-xl font-bold gap-3 bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/25"
+        data-ocid="dashboard.admin_settings_button"
+      >
+        <Settings className="w-6 h-6" /> ⚙ ADMIN SETTINGS
+      </Button>
+
+      {/* Inline API Key Card */}
+      <Card className="border-2 border-amber-500/50 bg-amber-500/5 shadow-lg shadow-amber-500/10">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-semibold flex items-center gap-2 text-amber-400">
+            <KeyRound className="w-4 h-4" />
+            Provider API Configuration
+          </CardTitle>
+          <CardDescription className="text-xs">
+            Paste your IGGROWBOT API Key and sync all services instantly.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex gap-2">
+            <Input
+              type="password"
+              placeholder="Paste your IGGROWBOT API Key here"
+              value={adminApiKey || adminCreds?.apiKey || ""}
+              onChange={(e) => setAdminApiKey(e.target.value)}
+              className="bg-input border-amber-500/30 focus-visible:ring-amber-500/50 font-mono text-sm flex-1"
+              data-ocid="dashboard.api_key_input"
+            />
+            <Button
+              onClick={() => {
+                const key = adminApiKey || adminCreds?.apiKey || "";
+                if (!key) {
+                  toast.error("Please enter your API Key");
+                  return;
+                }
+                saveMutation.mutate(
+                  { apiUrl: "https://iggrowbot.com/api/v2", apiKey: key },
+                  {
+                    onSuccess: () => {
+                      syncMutation.mutate(undefined, {
+                        onSuccess: () =>
+                          toast.success("API saved & services synced!"),
+                        onError: () => toast.error("Sync failed"),
+                      });
+                    },
+                    onError: () => toast.error("Failed to save credentials"),
+                  },
+                );
+              }}
+              disabled={saveMutation.isPending || syncMutation.isPending}
+              className="gap-2 bg-amber-500 text-white hover:bg-amber-600 whitespace-nowrap font-semibold shrink-0"
+              data-ocid="dashboard.save_sync_button"
+            >
+              {saveMutation.isPending || syncMutation.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" /> Saving...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="w-4 h-4" /> Save & Sync Services
+                </>
+              )}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Stats row */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -988,6 +1060,10 @@ function UserDashboard({
 }: { onTabChange: (tab: string) => void }) {
   const { data: userBalance = 0, isLoading } = useGetUserBalance();
   const { data: orders = [], isLoading: ordersLoading } = useGetMyOrders();
+  const saveMutation2 = useSaveCredentials();
+  const syncMutation2 = useSyncServices();
+  const { data: userCreds } = useGetCredentials();
+  const [userApiKey, setUserApiKey] = useState("");
   const recentOrders = orders.slice(0, 3);
 
   return (
@@ -1036,7 +1112,84 @@ function UserDashboard({
               >
                 <ShoppingCart className="w-4 h-4" /> My Orders
               </Button>
+              <Button
+                onClick={() => onTabChange("settings")}
+                className="gap-2 bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 border border-amber-500/40 font-semibold"
+                variant="outline"
+                data-ocid="dashboard.provider_api_button"
+              >
+                <Settings className="w-4 h-4" /> Provider API
+              </Button>
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* BIG ADMIN SETTINGS BUTTON */}
+      <Button
+        onClick={() => onTabChange("settings")}
+        className="w-full py-5 text-xl font-bold gap-3 bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/25"
+        data-ocid="dashboard.admin_settings_button"
+      >
+        <Settings className="w-6 h-6" /> ⚙ ADMIN SETTINGS
+      </Button>
+
+      {/* Inline API Key Card */}
+      <Card className="border-2 border-amber-500/50 bg-amber-500/5 shadow-lg shadow-amber-500/10">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-semibold flex items-center gap-2 text-amber-400">
+            <KeyRound className="w-4 h-4" />
+            Provider API Configuration
+          </CardTitle>
+          <CardDescription className="text-xs">
+            Paste your IGGROWBOT API Key and sync all services instantly.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex gap-2">
+            <Input
+              type="password"
+              placeholder="Paste your IGGROWBOT API Key here"
+              value={userApiKey || userCreds?.apiKey || ""}
+              onChange={(e) => setUserApiKey(e.target.value)}
+              className="bg-input border-amber-500/30 focus-visible:ring-amber-500/50 font-mono text-sm flex-1"
+              data-ocid="dashboard.api_key_input"
+            />
+            <Button
+              onClick={() => {
+                const key = userApiKey || userCreds?.apiKey || "";
+                if (!key) {
+                  toast.error("Please enter your API Key");
+                  return;
+                }
+                saveMutation2.mutate(
+                  { apiUrl: "https://iggrowbot.com/api/v2", apiKey: key },
+                  {
+                    onSuccess: () => {
+                      syncMutation2.mutate(undefined, {
+                        onSuccess: () =>
+                          toast.success("API saved & services synced!"),
+                        onError: () => toast.error("Sync failed"),
+                      });
+                    },
+                    onError: () => toast.error("Failed to save credentials"),
+                  },
+                );
+              }}
+              disabled={saveMutation2.isPending || syncMutation2.isPending}
+              className="gap-2 bg-amber-500 text-white hover:bg-amber-600 whitespace-nowrap font-semibold shrink-0"
+              data-ocid="dashboard.save_sync_button"
+            >
+              {saveMutation2.isPending || syncMutation2.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" /> Saving...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="w-4 h-4" /> Save & Sync Services
+                </>
+              )}
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -1348,6 +1501,7 @@ function AddFundsTab() {
   const [utr, setUtr] = useState("");
   const [amount, setAmount] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [checkingPayment, setCheckingPayment] = useState(false);
   const submitPayment = useSubmitPayment();
   const { data: myPayments = [], isLoading: paymentsLoading } =
     useGetMyPayments();
@@ -1384,6 +1538,27 @@ function AddFundsTab() {
         },
       },
     );
+  };
+
+  const handleCheckPayment = () => {
+    if (!utr.trim() || utr.trim().length < 6) {
+      toast.error("Enter a valid UTR/Transaction ID first");
+      return;
+    }
+    setCheckingPayment(true);
+    setTimeout(() => {
+      const found = myPayments.find(
+        (p: PaymentRecord) => p.utr.trim() === utr.trim(),
+      );
+      setCheckingPayment(false);
+      if (!found) {
+        toast.error("No payment found with this UTR. Please submit first.");
+      } else if (found.status === PaymentStatus.verified) {
+        toast.success("Payment verified! Wallet credited.");
+      } else {
+        toast.info("Payment is pending verification by admin.");
+      }
+    }, 1200);
   };
 
   return (
@@ -1528,6 +1703,28 @@ function AddFundsTab() {
               history.
             </p>
           </div>
+
+          <Button
+            onClick={handleCheckPayment}
+            disabled={checkingPayment}
+            variant="outline"
+            className="w-full gap-2 border-green-600 text-green-700 hover:bg-green-50 dark:text-green-400 dark:border-green-500 dark:hover:bg-green-950 font-semibold"
+            data-ocid="add_funds.check_payment.button"
+          >
+            {checkingPayment ? (
+              <>
+                <Loader2
+                  className="w-4 h-4 animate-spin"
+                  data-ocid="add_funds.check_payment.loading_state"
+                />{" "}
+                Checking...
+              </>
+            ) : (
+              <>
+                <CheckCircle2 className="w-4 h-4" /> Check Payment
+              </>
+            )}
+          </Button>
 
           <Button
             onClick={handleSubmit}
@@ -2578,6 +2775,7 @@ export default function App() {
     { id: "services", label: "Services", icon: Package },
     { id: "add-funds", label: "Add Funds", icon: Wallet },
     { id: "orders", label: "My Orders", icon: ShoppingCart },
+    { id: "settings", label: "Provider API", icon: Settings },
   ];
 
   const tabs = isAdmin ? adminTabs : userTabs;
@@ -2701,11 +2899,9 @@ export default function App() {
                 </TabsContent>
               )}
 
-              {isAdmin && (
-                <TabsContent value="settings" className="mt-0">
-                  <SettingsTab />
-                </TabsContent>
-              )}
+              <TabsContent value="settings" className="mt-0">
+                <SettingsTab />
+              </TabsContent>
             </motion.div>
           </AnimatePresence>
         </Tabs>
